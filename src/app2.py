@@ -29,7 +29,7 @@ fig = make_subplots(
 for idx, cuadrante in enumerate(cuadrantes):
     row = idx // 2 + 1
     col = idx % 2 + 1
-    df_cuad = filtered_data[filtered_data['Cuadrante'] == cuadrante]
+    df_cuad = filtered_data[filtered_data['cuadrante'] == cuadrante]
     agg = (
         df_cuad.groupby(['Año_Mes', 'Cambio_cuadrante'], as_index=False)
         .agg({'TRAFOACTUAL': 'count'})
