@@ -1,3 +1,5 @@
+import streamlit as st
+@st.cache_data
 def load_data(file_path):
     import pandas as pd
     return pd.read_excel(file_path)
