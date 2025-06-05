@@ -6,7 +6,7 @@ import plotly.express as px
 from streamlit_plotly_events import plotly_events
 
 # Load data
-data = load_data('streamlit-cuadrantes-app/trafo_balance.xlsx')
+data = load_data('trafo_balance.xlsx')
 data['Año_Mes'] = pd.to_datetime(data['Año_Mes'], format='%Y-%m')
 
 st.title("Visualización de Transformadores por Cuadrante")
