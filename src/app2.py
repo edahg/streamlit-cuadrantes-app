@@ -11,6 +11,10 @@ data['Año_Mes'] = pd.to_datetime(data['Año_Mes'], format='%Y-%m')
 
 st.title("Visualización de Transformadores por Cuadrante")
 
+# Filtro de Circuito
+circuitos = ["Todos"] + sorted(data['CIRCUITO'].dropna().unique().tolist())
+selected_circuito = st.selectbox("Selecciona un circuito:", circuitos)
+
 # Date selection
 start_date = st.date_input("Select Start Date", value=data['Año_Mes'].min().date())
 end_date = st.date_input("Select End Date", value=data['Año_Mes'].max().date())
@@ -18,12 +22,22 @@ end_date = st.date_input("Select End Date", value=data['Año_Mes'].max().date())
 # Filter data based on selected dates
 filtered_data = data[(data['Año_Mes'] >= pd.to_datetime(start_date)) & (data['Año_Mes'] <= pd.to_datetime(end_date))]
 
+# Filtro por circuito (si no es "Todos")
+if selected_circuito != "Todos":
+    filtered_data = filtered_data[filtered_data['CIRCUITO'] == selected_circuito]
+
 # --- SUBPLOTS DE BARRAS APILADAS POR CUADRANTE ---
+cuadrante_titles = {
+    1: "Pérdida <10%",
+    2: "Pérdida entre 10% y 80%",
+    3: "Medida Inconsistente",
+    4: "Sin Macromedidor"
+}
 cuadrantes = filtered_data['cuadrante'].unique()
 cuadrantes.sort()
 fig = make_subplots(
     rows=2, cols=2,
-    subplot_titles=[f"Cuadrante {c}" for c in cuadrantes]
+    subplot_titles=[cuadrante_titles.get(c, f"Cuadrante {c}") for c in cuadrantes]
 )
 
 for idx, cuadrante in enumerate(cuadrantes):
