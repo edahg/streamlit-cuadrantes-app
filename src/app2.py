@@ -4,6 +4,8 @@ from datetime import datetime
 from utils import load_data
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.figure_factory as ff
+import plotly.express as px
 
 # Load data
 data = load_data('trafo_balance.xlsx')
@@ -67,3 +69,75 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig)
+
+st.markdown("### Comparación de Distribución de Pérdida")
+
+# Date selectors for comparing distributions
+col1, col2 = st.columns(2)
+with col1:
+    compare_date_1 = st.date_input("Fecha 1", value=data['Año_Mes'].min().date(), key="comp1")
+with col2:
+    compare_date_2 = st.date_input("Fecha 2", value=data['Año_Mes'].max().date(), key="comp2")
+
+# Cuadrantes 1 y 2 solamente
+cuadrante_1_2 = filtered_data[filtered_data['cuadrante'].isin([1, 2])]
+
+# Datos para cada fecha
+date1_data = cuadrante_1_2[cuadrante_1_2['Año_Mes'] == pd.to_datetime(compare_date_1)]
+date2_data = cuadrante_1_2[cuadrante_1_2['Año_Mes'] == pd.to_datetime(compare_date_2)]
+
+
+# Extraer 'perdida' y convertir a porcentaje sin decimales
+perdida_1 = (date1_data['%_Perdida'] * 100).dropna().round(0)
+perdida_2 = (date2_data['%_Perdida'] * 100).dropna().round(0)
+
+# Crear el KDE plot con bell curves
+fig0 = ff.create_distplot(
+    [perdida_1, perdida_2],
+    group_labels=[f"{compare_date_1}", f"{compare_date_2}"],
+    show_hist=False,
+    show_rug=False,
+    bin_size=1
+)
+
+# Ajustar layout
+fig0.update_layout(
+    title="Distribución de Pérdida (Curvas KDE)",
+    xaxis_title="Pérdida (%)",
+    yaxis_title="Densidad",
+)
+
+# Eje X sin decimales
+fig0.update_xaxes(tickformat=",d")
+
+# Mostrar gráfico
+st.plotly_chart(fig0, use_container_width=True)
+
+# Crear DataFrame combinado
+df_dist = pd.DataFrame({
+    '%_Perdida': pd.concat([
+        date1_data['%_Perdida'] * 100,
+        date2_data['%_Perdida'] * 100
+    ]),
+    'fecha': ([str(compare_date_1)] * len(date1_data)) + ([str(compare_date_2)] * len(date2_data))
+})
+
+# Histograma superpuesto con transparencia
+fig = px.histogram(
+    df_dist,
+    x="%_Perdida",
+    color="fecha",
+    color_discrete_sequence=["blue", "red"],
+    nbins=20,
+    barmode="overlay",
+    opacity=0.6,
+    labels={"%_Perdida": "Pérdida (%)"},
+    title="Distribución Comparada de Pérdida"
+)
+
+# Formatear eje x como entero sin decimales
+fig.update_xaxes(tickformat=",d")
+
+# Mostrar en Streamlit
+st.plotly_chart(fig, use_container_width=True)
+ 
