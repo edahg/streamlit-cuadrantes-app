@@ -229,11 +229,11 @@ elif page == "Incremental":
         'Rojo (>80%)': '>80%'
     })
     # Define category order and colors
-    categoria_order = ["Verde(<25%)", "Amarillo(25%-80%)", "Rojo(>80%)"]
+    categoria_order = ["<25%", "25%-80%",">80%"]
     categoria_colors = {
-        "Verde(<25%)": "#99c140",
-        "Amarillo(25%-80%)": "#e7b416",
-        "Rojo(>80%)": "#cc3232"
+        "<25%": "#99c140",
+        "25%-80%": "#e7b416",
+        ">80%": "#cc3232"
     }
 
     agg_noinc = (
