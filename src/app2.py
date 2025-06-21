@@ -221,6 +221,13 @@ elif page == "Incremental":
     data_noinc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_noinc['FECHA_DE_EJECUCION'])
     data_noinc['Año_Mes'] = data_noinc['FECHA_DE_EJECUCION'].dt.to_period('M').dt.to_timestamp()
 
+
+    #category renaming
+    data_noinc['Categoría'] = data_noinc['Categoría'].replace({
+        'Verde (<25%)': '<25%',
+        'Amarillo (25%-80%)': '25%-80%',
+        'Rojo (>80%)': '>80%'
+    })
     # Define category order and colors
     categoria_order = ["Verde(<25%)", "Amarillo(25%-80%)", "Rojo(>80%)"]
     categoria_colors = {
