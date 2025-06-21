@@ -224,10 +224,13 @@ elif page == "Incremental":
 
     #category renaming
     data_noinc['Categoría'] = data_noinc['Categoría'].replace({
-        'Verde (<25%)': '<25%',
-        'Amarillo (25%-80%)': '25%-80%',
-        'Rojo (>80%)': '>80%'
+        'Verde(<25%)': '<25%',
+        'Amarillo(25%-80%)': '25%-80%',
+        'Rojo(>80%)': '>80%'
     })
+
+    #st.write(data_noinc['Categoría'].unique())
+
     # Define category order and colors
     categoria_order = ["<25%", "25%-80%",">80%"]
     categoria_colors = {
