@@ -9,13 +9,16 @@ import plotly.express as px
 
 # --- LATERAL MENU ---
 st.sidebar.title("Navegación")
-page = None
-if st.sidebar.button("Cuadrantes"):
-    page = "Cuadrantes"
-if st.sidebar.button("Incrementales"):
-    page = "Incrementales"
-if page is None:
-    page = "Cuadrantes"  # Default page
+
+if "page" not in st.session_state:
+    st.session_state.page = "Cuadrantes"  # Default page
+
+if st.sidebar.button("Cuadrantes Trafos"):
+    st.session_state.page = "Cuadrantes"
+if st.sidebar.button("Incremental"):
+    st.session_state.page = "Incremental"
+
+page = st.session_state.page
 
 
 # --- PAGE 1: CUADRANTES ---
@@ -31,7 +34,7 @@ if page == "Cuadrantes":
     selected_circuito = st.selectbox("Selecciona un circuito:", circuitos)
 
     # Date selection
-    start_date = st.date_input("Select Start Date", value=data['Año_Mes'].min().date())
+    start_date = st.date_input("Select Start Date", value=pd.to_datetime('2024/01/01').date())
     end_date = st.date_input("Select End Date", value=data['Año_Mes'].max().date())
 
     # Filter data based on selected dates
@@ -88,7 +91,7 @@ if page == "Cuadrantes":
     # Date selectors for comparing distributions
     col1, col2 = st.columns(2)
     with col1:
-        compare_date_1 = st.date_input("Fecha 1", value=data['Año_Mes'].min().date(), key="comp1")
+        compare_date_1 = st.date_input("Fecha 1", value=pd.to_datetime('2024/12/01').date(), key="comp1")
     with col2:
         compare_date_2 = st.date_input("Fecha 2", value=data['Año_Mes'].max().date(), key="comp2")
 
@@ -154,11 +157,11 @@ if page == "Cuadrantes":
 
     # Mostrar en Streamlit
     st.plotly_chart(fig, use_container_width=True)
-
+    pass
 
 # --- PAGE 2: INCREMENTALES ---
 elif page == "Incremental":
-    st.title("Incrementales por Línea y Producto")
+    st.title("Usuarios con Incremental")
 
     data_inc = load_data('incremental_clasificado_2025_04.xlsx')
     data_inc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_inc['FECHA_DE_EJECUCION'])
@@ -211,8 +214,8 @@ elif page == "Incremental":
 
     st.plotly_chart(fig2)
 
-# --- SECOND PLOT: NO INCREMENTALES ---
-    st.title("Sémaforo de No Incrementales#")
+# --- SECOND PLOT: NO INCREMENTAL ---
+    st.title("Sémaforo de Usuarios sin Incremental")
 
     data_noinc = load_data('no_incremental_2025_04_1.xlsx')
     data_noinc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_noinc['FECHA_DE_EJECUCION'])
@@ -260,3 +263,4 @@ elif page == "Incremental":
     )
 
     st.plotly_chart(fig3)
+    pass
