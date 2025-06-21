@@ -9,7 +9,13 @@ import plotly.express as px
 
 # --- LATERAL MENU ---
 st.sidebar.title("Navegación")
-page = st.sidebar.radio("Selecciona una vista:", ["Cuadrantes", "Incremental"])
+page = None
+if st.sidebar.button("Cuadrantes"):
+    page = "Cuadrantes"
+if st.sidebar.button("Incrementales"):
+    page = "Incrementales"
+if page is None:
+    page = "Cuadrantes"  # Default page
 
 
 # --- PAGE 1: CUADRANTES ---
@@ -204,3 +210,53 @@ elif page == "Incremental":
     )
 
     st.plotly_chart(fig2)
+
+# --- SECOND PLOT: NO INCREMENTALES ---
+    st.title("Sémaforo de No Incrementales#")
+
+    data_noinc = load_data('no_incremental_2025_04_1.xlsx')
+    data_noinc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_noinc['FECHA_DE_EJECUCION'])
+    data_noinc['Año_Mes'] = data_noinc['FECHA_DE_EJECUCION'].dt.to_period('M').dt.to_timestamp()
+
+    # Define category order and colors
+    categoria_order = ["Verde(<25%)", "Amarillo(25%-80%)", "Rojo(>80%)"]
+    categoria_colors = {
+        "Verde(<25%)": "#99c140",
+        "Amarillo(25%-80%)": "#e7b416",
+        "Rojo(>80%)": "#cc3232"
+    }
+
+    agg_noinc = (
+        data_noinc.groupby(['Año_Mes', 'Categoría'], as_index=False)
+        .agg({'PRODUCTO': 'count'})
+        .rename(columns={'PRODUCTO': 'Cantidad'})
+    )
+
+    # Calculate total per Año_Mes for percentage (for tooltip)
+    total_per_mes_noinc = agg_noinc.groupby('Año_Mes')['Cantidad'].transform('sum')
+    agg_noinc['Porcentaje'] = agg_noinc['Cantidad'] / total_per_mes_noinc * 100
+
+    fig3 = go.Figure()
+    for cat in categoria_order:
+        df_cat = agg_noinc[agg_noinc['Categoría'] == cat]
+        fig3.add_trace(go.Bar(
+            x=df_cat['Año_Mes'],
+            y=df_cat['Cantidad'],
+            name=str(cat),
+            marker_color=categoria_colors.get(cat, None),
+            customdata=df_cat['Porcentaje'].round(1),
+            hovertemplate=(
+                'Año-Mes: %{x}<br>'
+                'Cantidad: %{y}<br>'
+                'Porcentaje: %{customdata}%<extra></extra>'
+            )
+        ))
+
+    fig3.update_layout(
+        barmode='stack',
+        title="Cantidad de No Incrementales por Mes y Categoría",
+        xaxis_title="Año-Mes",
+        yaxis_title="Cantidad"
+    )
+
+    st.plotly_chart(fig3)
