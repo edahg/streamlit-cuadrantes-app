@@ -161,32 +161,51 @@ if page == "Cuadrantes":
 
 # --- PAGE 2: INCREMENTALES ---
 elif page == "Incremental":
-    st.title("Usuarios con Incremental")
+    st.title("Incrementales por Línea y Tipo Incremental")
 
+    # --- Load and filter incremental data ---
     data_inc = load_data('incremental_clasificado_2025_04.xlsx')
     data_inc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_inc['FECHA_DE_EJECUCION'])
     data_inc['Año_Mes'] = data_inc['FECHA_DE_EJECUCION'].dt.to_period('M').dt.to_timestamp()
 
-    # Filter by total_periodos >= 6
-    filtered_inc = data_inc[data_inc['total_periodos'] >= 6]
+    # --- Load and filter no incremental data ---
+    data_noinc = load_data('no_incremental_2025_04_1.xlsx')
+    data_noinc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_noinc['FECHA_DE_EJECUCION'])
+    data_noinc['Año_Mes'] = data_noinc['FECHA_DE_EJECUCION'].dt.to_period('M').dt.to_timestamp()
 
-    # Línea filter with "Todas" option
-    lineas = filtered_inc['LINEA'].dropna().unique()
-    lineas = sorted(lineas)
+    # --- IRREGULARIDAD filter (shared) ---
+    irregularidades = sorted(
+        set(data_inc['IRREGULARIDAD'].dropna().unique()).union(
+            set(data_noinc['IRREGULARIDAD'].dropna().unique())
+        )
+    )
+    irregularidad_sel = st.selectbox("Filtrar por IRREGULARIDAD", options=["Todas"] + irregularidades)
+
+    if irregularidad_sel != "Todas":
+        data_inc = data_inc[data_inc['IRREGULARIDAD'] == irregularidad_sel]
+        data_noinc = data_noinc[data_noinc['IRREGULARIDAD'] == irregularidad_sel]
+
+    # --- LINEA filter (shared) ---
+    lineas = sorted(
+        set(data_inc['LINEA'].dropna().unique()).union(
+            set(data_noinc['LINEA'].dropna().unique())
+        )
+    )
     lineas_options = ["Todas"] + list(lineas)
     linea_sel = st.selectbox("Filtrar por LINEA", options=lineas_options)
 
     if linea_sel != "Todas":
-        filtered_inc = filtered_inc[filtered_inc['LINEA'] == linea_sel]
+        data_inc = data_inc[data_inc['LINEA'] == linea_sel]
+        data_noinc = data_noinc[data_noinc['LINEA'] == linea_sel]
 
-    # Aggregate for stacked bar: count of producto by Año_Mes and tipo_incremental
+    # --- Incrementales plot ---
+    filtered_inc = data_inc[data_inc['total_periodos'] >= 6]
+
     agg_inc = (
         filtered_inc.groupby(['Año_Mes', 'tipo_incremento'], as_index=False)
         .agg({'PRODUCTO': 'count'})
         .rename(columns={'PRODUCTO': 'Cantidad'})
     )
-
-    # Calculate total per Año_Mes for percentage
     total_per_mes = agg_inc.groupby('Año_Mes')['Cantidad'].transform('sum')
     agg_inc['Porcentaje'] = agg_inc['Cantidad'] / total_per_mes * 100
 
@@ -207,20 +226,14 @@ elif page == "Incremental":
 
     fig2.update_layout(
         barmode='stack',
-        title=f"Cantidad de Productos Incrementales por Mes para LINEA {linea_sel}",
+        title=f"Cantidad de PRODUCTOs Incrementales por Mes y Tipo Incremental" + (f" para LINEA {linea_sel}" if linea_sel != "Todas" else ""),
         xaxis_title="Año-Mes",
         yaxis_title="Cantidad"
     )
-
     st.plotly_chart(fig2)
 
-# --- SECOND PLOT: NO INCREMENTAL ---
-    st.title("Sémaforo de Usuarios sin Incremental")
-
-    data_noinc = load_data('no_incremental_2025_04_1.xlsx')
-    data_noinc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_noinc['FECHA_DE_EJECUCION'])
-    data_noinc['Año_Mes'] = data_noinc['FECHA_DE_EJECUCION'].dt.to_period('M').dt.to_timestamp()
-
+    # --- No Incrementales plot ---
+    st.title("No Incrementales por Categoría")
 
     #category renaming
     data_noinc['Categoría'] = data_noinc['Categoría'].replace({
@@ -229,9 +242,7 @@ elif page == "Incremental":
         'Rojo(>80%)': '>80%'
     })
 
-    #st.write(data_noinc['Categoría'].unique())
-
-    # Define category order and colors
+    # Update category order and colors as needed
     categoria_order = ["<25%", "25%-80%",">80%"]
     categoria_colors = {
         "<25%": "#99c140",
@@ -244,8 +255,6 @@ elif page == "Incremental":
         .agg({'PRODUCTO': 'count'})
         .rename(columns={'PRODUCTO': 'Cantidad'})
     )
-
-    # Calculate total per Año_Mes for percentage (for tooltip)
     total_per_mes_noinc = agg_noinc.groupby('Año_Mes')['Cantidad'].transform('sum')
     agg_noinc['Porcentaje'] = agg_noinc['Cantidad'] / total_per_mes_noinc * 100
 
@@ -267,10 +276,9 @@ elif page == "Incremental":
 
     fig3.update_layout(
         barmode='stack',
-        title="Cantidad de No Incrementales por Mes y Categoría",
+        title="Cantidad de No Incrementales por Mes y Categoría" + (f" para LINEA {linea_sel}" if linea_sel != "Todas" else ""),
         xaxis_title="Año-Mes",
         yaxis_title="Cantidad"
-    )
-
+        )
     st.plotly_chart(fig3)
     pass
