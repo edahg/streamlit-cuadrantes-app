@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
 import plotly.express as px
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 # --- LATERAL MENU ---
 st.sidebar.title("Navegación")
@@ -164,12 +165,12 @@ elif page == "Incremental":
     st.title("Incrementales por Línea y Tipo Incremental")
 
     # --- Load and filter incremental data ---
-    data_inc = load_data('incremental_clasificado_2025_04.xlsx')
+    data_inc = load_data('incremental_clasificado_2025_05.xlsx')
     data_inc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_inc['FECHA_DE_EJECUCION'])
     data_inc['Año_Mes'] = data_inc['FECHA_DE_EJECUCION'].dt.to_period('M').dt.to_timestamp()
 
     # --- Load and filter no incremental data ---
-    data_noinc = load_data('no_incremental_2025_04_1.xlsx')
+    data_noinc = load_data('no_incremental_2025_05.xlsx')
     data_noinc['FECHA_DE_EJECUCION'] = pd.to_datetime(data_noinc['FECHA_DE_EJECUCION'])
     data_noinc['Año_Mes'] = data_noinc['FECHA_DE_EJECUCION'].dt.to_period('M').dt.to_timestamp()
 
@@ -282,3 +283,32 @@ elif page == "Incremental":
         )
     st.plotly_chart(fig3)
     pass
+
+st.markdown("###  Usuarios sin Incremental")
+
+# Select columns to show (you can adjust as needed)
+show_cols = ['LINEA', 'PRODUCTO', 'IRREGULARIDAD', 'Año_Mes', 'Categoría',
+              'total_periodos', 'periodos_incremental_positivos', 'periodos_incremental_negativos',
+               'promedio_consumo_previo', 'promedio_consumo_inferior', 'promedio_variación_consumo_inferior',
+                '%_variación_promedio' ]
+
+# Prepare the table
+table_data = data_noinc[show_cols].copy()
+
+# Build AgGrid options with filtering enabled
+gb = GridOptionsBuilder.from_dataframe(table_data)
+gb.configure_default_column(filter=True, sortable=True, resizable=True)
+gb.configure_pagination()
+gb.configure_side_bar()  # Optional: adds a sidebar for filters
+
+grid_options = gb.build()
+
+AgGrid(
+    table_data,
+    gridOptions=grid_options,
+    enable_enterprise_modules=True,
+    theme="streamlit",  # or "alpine", "balham", etc.
+    fit_columns_on_grid_load=False
+)
+
+
